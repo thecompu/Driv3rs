@@ -8,7 +8,6 @@ finally:
 
 SOSSlice = SOS.encode('hex_codec')[0x10:0x14]
 print '0x' +  SOSSlice
-SOSstruct = str(struct.pack('>2s', SOSSlice) [0])
-print 'Packed: ' + SOSstruct
-SOSunhexlify = binascii.unhexlify(SOSstruct)
+SOSunhexlify = binascii.unhexlify(SOSSlice)
 print 'Unhexlified: ' + SOSunhexlify
+SOSstruct = str(struct.pack('>2s', SOSunhexlify)[0])
