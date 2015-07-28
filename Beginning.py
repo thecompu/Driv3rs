@@ -6,6 +6,8 @@ try:
 finally:
         SOSfile.close()
 
-#Slice two bytes
-SOSSlice = SOS[0x10:0x11]
-SOSstruct = struct.unpack('< H', SOSSlice[0])
+# encode file as hexadecimal
+SOSHex = SOS.encode('hex_codec')
+print SOSHex[0x10:0x14]
+SOSstruct = struct.unpack('< f', SOS[0x10:0x14])
+print SOSstruct
