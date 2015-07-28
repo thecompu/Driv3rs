@@ -6,8 +6,6 @@ try:
 finally:
         SOSfile.close()
 
-SOSSlice = SOS.encode('hex_codec')[0x10:0x14]
-print '0x' +  SOSSlice
-SOSunhexlify = binascii.unhexlify(SOSSlice)
-print 'Unhexlified: ' + SOSunhexlify
-SOSstruct = str(struct.pack('>2s', SOSunhexlify)[0])
+#Slice two bytes
+SOSSlice = SOS[0x10:0x11]
+SOSstruct = struct.unpack('< H', SOSSlice[0])
