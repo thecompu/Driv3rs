@@ -8,6 +8,14 @@ finally:
 
 # encode file as hexadecimal
 SOSHex = SOS.encode('hex_codec')
-print SOSHex[0x10:0x14]
-SOSstruct = struct.unpack('< f', SOS[0x10:0x14])
-print SOSstruct
+
+#Search for 0x2205 byte pair
+print 'Searching for first bytepair...'
+SOSfindbyte = SOSHex.find('2205')
+print 'I found it.'
+
+#Reorder for Little Endian
+MSB = SOSHex[SOSfindbyte+2:SOSfindbyte+4]
+LSB = SOSHex[SOSfindbyte:SOSfindbyte+2]
+
+print "In File: " + LSB, MSB + "\nLittle Endian: " + MSB, LSB
