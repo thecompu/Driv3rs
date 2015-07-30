@@ -1,21 +1,15 @@
-import struct
-import binascii
+from struct import unpack
+
+#Is File a SOS DRIVER file?
 SOSfile = open('SOSCFFA.DRIVER', 'rb')
-try:
-        SOS = SOSfile.read()
-finally:
-        SOSfile.close()
+SOS = SOSfile.read(10)
+filetype, offset = unpack('< 8s H', SOS)
+print "Filetype is: %s. Offset is: %04x" % (filetype, offset)
 
-# encode file as hexadecimal
-SOSHex = SOS.encode('hex_codec')
+#Seek to first driver
+SOSfile.seek(offset,1)
+SOS = SOSfile.read(2) # Read two bytes
+marker = unpack('< H', SOS)
+if marker == \x0000 :
 
-#Search for 0x2205 byte pair
-print 'Searching for first bytepair...'
-SOSfindbyte = SOSHex.find('2205')
-print 'I found it.'
-
-#Reorder for Little Endian
-MSB = SOSHex[SOSfindbyte+2:SOSfindbyte+4]
-LSB = SOSHex[SOSfindbyte:SOSfindbyte+2]
-
-print "In File: " + LSB, MSB + "\nLittle Endian: " + MSB, LSB
+SOSfile.close()
