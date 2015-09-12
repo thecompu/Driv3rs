@@ -61,4 +61,16 @@ I am having trouble with the return portion. I don't really know how to do it. W
 
 Implemented a (very) rudimentary IF/ELSE that checks the first eight bytes of the driver file to see if "SOS DRVR" exist. If not, the script ends. If so, we will continue. This entailed unpacking the data as string-data, converting the resultant tuple into an str, then checking what's there. I did verify via HEX edit that if the string is not "SOS DRVR," the else will be taken.
 
-Is there a way to run the IF/ELSE against the contents of the tuple? It would save my having to convert from tuple to str. 
+Is there a way to run the IF/ELSE against the contents of the tuple? It would save my having to convert from tuple to str.
+
+(edit: Yes, there is. if element in tuple)
+
+I played further with the function. I am still not able to get it to work, but I am feeling a little more comfortable with the idea.
+
+9/12/2015
+
+After reading little pieces about functions throughout the week and playing with tutorials, I have a function that will take a number of bytes as an argument, read those bytes, unpack into little-endian as hexadecimal, then return the resultant tuple as an integer. Right now, this function only handles two bytes which is what we need for the jumps. Later, I'll try to figure out what to do for strings which requires a different unpack procedure. It may work better as its own function or part of the same. I don't know.
+
+The function is called inside a while loop that indefinitely executes until the encountered two-byte value is FFFF.
+
+It's working... more or less. 
