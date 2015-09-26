@@ -73,4 +73,32 @@ After reading little pieces about functions throughout the week and playing with
 
 The function is called inside a while loop that indefinitely executes until the encountered two-byte value is FFFF.
 
-It's working... more or less. 
+It's working... more or less.
+
+9/26/2015
+
+Life sucks. Fucking anxiety. Fucking depression.
+
+Anyway, I cleaned up a lot of the code and I also implemented a counter for the number of drivers encountered.
+
+Later, I implemented creating nested dictionaries based upon how many drivers were encountered. I don't know if this type of creation will work as I go back through the drivers to get information on the drivers themselves, but I think it's a good start.
+
+Current sample run:
+
+IN: python 3Slurp.py
+OUT: This is a proper SOS file.
+Filetype is: SOS DRVR.
+The first offset value is 0x522
+Total drivers encountered:  4
+{'Driver_3': {'Offset': '0x2ea'}, 'Driver_2': {'Offset': '0xeac'}, 'Driver_1': {'Offset': '0x4a4'}, 'Driver_4': {'Offset': '0xf86'}}
+
+I'll want to wind up with something like this (formatted for easier reading)
+
+{
+  'Driver_1' :
+  {
+    'Offset' : '0x4a4',
+    'Name' : 'CONSOLE',
+    etc...
+  }
+}

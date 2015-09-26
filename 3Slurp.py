@@ -28,15 +28,22 @@ else:
 # Read immediate two bytes after SOS DRVR to establish first offset value.
 offset = readUnpackAndint(2)
 print "The first offset value is", hex(offset)
+drivers = 0 ## This is to keep a running total of drivers.
+drivers_dict = dict() ## Intialize a dictionary to hold the drivers.
 
-### I will establish an indefinite loop that will come around until we
-### encounter FF which indicates the last driver. For now, I am manually
-### looping to check logic.
+### Begin an indefinite loop that will come around until we
+### encounter FF which indicates the last driver.
 
 while offset != 65535 :
     SOSfile.seek(offset,1)
-    print "This is our new position in the file: ", hex(SOSfile.tell())
+    ## print "DEBUG: This is our new position in the file: ", hex(SOSfile.tell())
     offset = readUnpackAndint(2)
-    print 'New offset is: ' , hex(offset)
+    if offset == 0 : ## Check to see if we're at the beginning of a new driver.
+        drivers = drivers + 1  ## And add to count of found drivers.
+        offset = readUnpackAndint(2)
+        drivers_dict ['Driver_'+str(drivers)] = dict([('Offset', hex(offset))])
+##    print 'DEBUG: New offset is: ' , hex(offset)
 
 SOSfile.close()
+print 'Total drivers encountered: ', drivers
+print drivers_dict
