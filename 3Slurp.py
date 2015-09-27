@@ -1,10 +1,15 @@
 from struct import unpack
 import os
 
-def readUnpackAndint(bytes):
-    SOS = SOSfile.read(bytes)
-    offset_unpacked = unpack ('< H', SOS)
-    return int('.'.join(str(x) for x in offset_unpacked))
+def readUnpack(bytes, **options):
+    if options.get("type") == 't':
+        SOS = SOSfile.read(bytes)
+        return unpack('< 8s', SOS)
+
+    if options.get("type") == 'b':
+        SOS = SOSfile.read(bytes)
+        offset_unpacked = unpack ('< H', SOS)
+        return int('.'.join(str(x) for x in offset_unpacked))
 
 #Clear SCREEN
 print("\033c");
@@ -12,8 +17,9 @@ print("\033c");
 #Is File a SOS DRIVER file?
 
 SOSfile = open('SOSCFFA.DRIVER', 'rb')
-SOS = SOSfile.read(8)
-filetype = unpack('< 8s', SOS)
+#SOS = SOSfile.read(8)
+#filetype = unpack('< 8s', SOS)
+filetype = readUnpack(8, type = 't')
 
 if 'SOS DRVR' in filetype:
     print "This is a proper SOS file."
@@ -26,7 +32,7 @@ else:
 ### find the first actual driver.
 
 # Read immediate two bytes after SOS DRVR to establish first offset value.
-offset = readUnpackAndint(2)
+offset = readUnpack(2, type = 'b')
 print "The first offset value is", hex(offset)
 drivers = 0 ## This is to keep a running total of drivers.
 drivers_dict = dict() ## Intialize a dictionary to hold the drivers.
@@ -37,10 +43,10 @@ drivers_dict = dict() ## Intialize a dictionary to hold the drivers.
 while offset != 65535 :
     SOSfile.seek(offset,1)
     ## print "DEBUG: This is our new position in the file: ", hex(SOSfile.tell())
-    offset = readUnpackAndint(2)
+    offset = readUnpack(2, type = 'b')
     if offset == 0 : ## Check to see if we're at the beginning of a new driver.
         drivers = drivers + 1  ## And add to count of found drivers.
-        offset = readUnpackAndint(2)
+        offset = readUnpack(2, type = 'b')
         drivers_dict ['Driver_'+str(drivers)] = dict([('Offset', hex(offset))])
 ##    print 'DEBUG: New offset is: ' , hex(offset)
 
