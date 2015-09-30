@@ -3,10 +3,12 @@ import os
 
 def readUnpack(bytes, **options):
     if options.get("type") == 't':
+        print 'DEBUG: In t'
         SOS = SOSfile.read(bytes)
-        return unpack('< 8s', SOS)
+        return unpack('< %ss' % bytes, SOS)
 
     if options.get("type") == 'b':
+        print 'DEBUG: In b'
         SOS = SOSfile.read(bytes)
         offset_unpacked = unpack ('< H', SOS)
         return int('.'.join(str(x) for x in offset_unpacked))
@@ -17,15 +19,15 @@ print("\033c");
 #Is File a SOS DRIVER file?
 
 SOSfile = open('SOSCFFA.DRIVER', 'rb')
-#SOS = SOSfile.read(8)
-#filetype = unpack('< 8s', SOS)
 filetype = readUnpack(8, type = 't')
 
 if 'SOS DRVR' in filetype:
     print "This is a proper SOS file."
     print "Filetype is: %s." % (filetype)
 else:
+    print "Filetype is: %s." % (filetype)
     print "This is not a proper SOS file"
+    exit()
 
 
 ### At this point, we need the first offset to tell us where to jump to
