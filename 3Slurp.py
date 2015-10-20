@@ -5,7 +5,8 @@ def readUnpack(bytes, **options):
     if options.get("type") == 't':
         #print 'DEBUG: In t'
         SOS = SOSfile.read(bytes)
-        return unpack('%ss' % bytes, SOS)
+        text_unpacked = unpack('%ss' % bytes, SOS)
+        return ''.join(text_unpacked)
 
     if options.get("type") == 'b':
         #print 'DEBUG: In b', bytes
@@ -23,7 +24,7 @@ print("\033c");
 SOSfile = open('SOSCFFA.DRIVER', 'rb')
 filetype = readUnpack(8, type = 't')
 
-if 'SOS DRVR' in filetype:
+if filetype == 'SOS DRVR':
     print "This is a proper SOS file."
     print "Filetype is: %s." % (filetype)
 else:
