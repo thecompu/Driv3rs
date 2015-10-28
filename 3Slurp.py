@@ -22,7 +22,7 @@ def readUnpack(bytes, **options):
         return int(ord(SOS))
 
 dev_types ={273: 'Character Device, Write-Only, Formatter',
-            321: 'Character Device, Write-Only, RS232 Printer',           # Dicionary for Types and SubTypes
+            321: 'Character Device, Write-Only, RS232 Printer',         # dictionary for types and subtypes
             577: 'Character Device, Write-Only, Silentype',
             833: 'Character Device, Write-Only, Parallel Printer',
             323: 'Character Device, Write-Only, Sound Port',
@@ -50,19 +50,19 @@ else:
     print "This is not a proper SOS file"
     exit()
 
-rel_offset = readUnpack(2, type = 'b')                                  # Read two bytes after SOS DRVR to establish first rel_offset value
-print "The first relative offset value is", rel_offset, hex(rel_offset) # Print out for debug
-drivers = 0                                                             # This is to keep a running total of drivers.
-drivers_list=[]                                                         # Initialize a list to hold dictionaries.
+rel_offset = readUnpack(2, type = 'b')                                  # read two bytes after SOS DRVR to establish first rel_offset value
+print "The first relative offset value is", rel_offset, hex(rel_offset) # print out for debug
+drivers = 0                                                             # this is to keep a running total of drivers.
+drivers_list=[]                                                         # initialize a list to hold dictionaries.
 
-loop = True                                                             # Set True for major driver loop
+loop = True                                                             # set True for major driver loop
 while loop :                                                            # establish loop to find major drivers
-    driver = {}                                                         # Intialize a dictionary to hold vaules as we loop
-    SOSfile.seek(rel_offset,1)                                          # Jump to location of first driver
+    driver = {}                                                         # intialize a dictionary to hold vaules as we loop
+    SOSfile.seek(rel_offset,1)                                          # jump to location of first driver
     driver['location'] = SOSfile.tell()                                 # add to driver dictionary 52c
     rel_offset = readUnpack(2, type = 'b')                              # 0000 comment length
-    if rel_offset == 0xFFFF:                                            # If we encounter FFFF, no more drivers
-        loop = False                                                    # Set loop to False to cancel while
+    if rel_offset == 0xFFFF:                                            # if we encounter FFFF, no more drivers
+        loop = False                                                    # set loop to False to cancel while
     else :
         drivers_list.append(driver)                                     # add to drivers_list list
         SOSfile.seek(rel_offset,1)                                      # seek forward based on contents of rel_offset
@@ -80,31 +80,31 @@ for i in range(0,len(drivers_list)):                                    # begin 
         drivers_list[i]['comment_txt'] = comment_txt                    # place comment in dictionary
     else:
         drivers_list[i]['comment_txt'] = ''                             # else enter comment as nothing
-    SOSfile.seek(2,1)                                                   # Skip two bytes immediately following comment or 0000
-    link_ptr = readUnpack(2, type = 'b')                                # Grab link pointer
-    drivers_list[i]['link_ptr'] = link_ptr                              # Store link pointer
-    entry = readUnpack(2, type = 'b')                                   # Grab entry field
-    drivers_list[i]['entry'] = entry                                    # Store entry field
-    name_len = readUnpack(1, type = '1')                                # Grab one byte for name length
-    drivers_list[i]['name_len'] = name_len                              # Store name length
-    name = readUnpack(name_len, type = 't')                             # Read name based on length
-    drivers_list[i]['name'] = name                                      # Store name
-    SOSfile.seek(15 - name_len,1)                                       # Skip past remainder of 15-byte long name field
-    flag = readUnpack(1, type = '1')                                    # Grab Flag byte
-    if flag == 192:                                                     # Is flag 0xc0?
-        drivers_list[i]['flag'] = 'ACTIVE, Load on Boundary'            # Yes, ACTIVE and load on boundary
-    elif flag == 128:                                                     # Is flag 0x80?
-        drivers_list[i]['flag'] = 'ACTIVE'                              # Insert Flag into dictionary with value ACTIVE
+    SOSfile.seek(2,1)                                                   # skip two bytes immediately following comment or 0000
+    link_ptr = readUnpack(2, type = 'b')                                # grab link pointer
+    drivers_list[i]['link_ptr'] = link_ptr                              # store link pointer
+    entry = readUnpack(2, type = 'b')                                   # grab entry field
+    drivers_list[i]['entry'] = entry                                    # store entry field
+    name_len = readUnpack(1, type = '1')                                # grab one byte for name length
+    drivers_list[i]['name_len'] = name_len                              # store name length
+    name = readUnpack(name_len, type = 't')                             # read name based on length
+    drivers_list[i]['name'] = name                                      # store name
+    SOSfile.seek(15 - name_len,1)                                       # skip past remainder of 15-byte long name field
+    flag = readUnpack(1, type = '1')                                    # grab Flag byte
+    if flag == 192:                                                     # is flag 0xc0?
+        drivers_list[i]['flag'] = 'ACTIVE, Load on Boundary'            # yes, ACTIVE and load on boundary
+    elif flag == 128:                                                   # is flag 0x80?
+        drivers_list[i]['flag'] = 'ACTIVE'                              # insert Flag into dictionary with value ACTIVE
     else:                                                               # otherwise...
-        drivers_list[i]['flag'] = 'INACTIVE'                            # Insert Flag into dictionary with value INACTIVE
-    slot_num = readUnpack(1, type = '1')                                # Grab slot number
-    if slot_num == 0:                                                   # Check if device has no slot number...
+        drivers_list[i]['flag'] = 'INACTIVE'                            # insert Flag into dictionary with value INACTIVE
+    slot_num = readUnpack(1, type = '1')                                # grab slot number
+    if slot_num == 0:                                                   # check if device has no slot number...
         drivers_list[i]['slot_num'] = 'None'                            # ... and indicate so.
     else:                                                               # otherwise...
         drivers_list[i]['slot_num'] = slot_num                          # ... enter slot number into the dictionary
     unit = readUnpack(1, type = '1')                                    # get the unit byte
     drivers_list[i]['unit'] = unit                                      # store unit in dictionary
-    dev_type = readUnpack(2, type ='b')                                 # Grab bytes for type and subtype
+    dev_type = readUnpack(2, type ='b')                                 # grab bytes for type and subtype
     drivers_list[i]['dev_type'] = dev_types[dev_type]
 
     print drivers_list[i]
