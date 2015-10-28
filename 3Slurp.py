@@ -91,7 +91,9 @@ for i in range(0,len(drivers_list)):                                    # begin 
     drivers_list[i]['name'] = name                                      # Store name
     SOSfile.seek(15 - name_len,1)                                       # Skip past remainder of 15-byte long name field
     flag = readUnpack(1, type = '1')                                    # Grab Flag byte
-    if flag == 128:                                                     # Is flag 0x80?
+    if flag == 192:                                                     # Is flag 0xc0?
+        drivers_list[i]['flag'] = 'ACTIVE, Load on Boundary'            # Yes, ACTIVE and load on boundary
+    elif flag == 128:                                                     # Is flag 0x80?
         drivers_list[i]['flag'] = 'ACTIVE'                              # Insert Flag into dictionary with value ACTIVE
     else:                                                               # otherwise...
         drivers_list[i]['flag'] = 'INACTIVE'                            # Insert Flag into dictionary with value INACTIVE
@@ -105,7 +107,7 @@ for i in range(0,len(drivers_list)):                                    # begin 
     dev_type = readUnpack(2, type ='b')                                 # Grab bytes for type and subtype
     drivers_list[i]['dev_type'] = dev_types[dev_type]
 
-    print drivers_list[i]['dev_type']
+    print drivers_list[i]
 #    print drivers_list[i]['name_len']
 
 SOSfile.close()
