@@ -34,6 +34,8 @@ dev_types ={273: 'Character Device, Write-Only, Formatter',
             721: 'Block Device, PROFile',
             4337: 'Block Device, CFFA3000'}
 
+mfgs =     {17491: 'David Schmidt'}                                     # dictionary for manufacturers
+
 #Clear SCREEN
 print("\033c");
 
@@ -72,7 +74,6 @@ while loop :                                                            # establ
 
 for i in range(0,len(drivers_list)):                                    # begin loop to grab information from DIB
     SOSfile.seek(drivers_list[i]['location'],0)                         # reference SOF and seek to beginning of major driver
-    atell = SOSfile.tell()
     comment_len = readUnpack(2, type = 'b')                             # grab comment length (2 bytes)
     drivers_list[i]['comment_len'] = comment_len                        # store comment length
     if comment_len != 0:                                                # if comment length is not 0000
@@ -104,8 +105,26 @@ for i in range(0,len(drivers_list)):                                    # begin 
         drivers_list[i]['slot_num'] = slot_num                          # ... enter slot number into the dictionary
     unit = readUnpack(1, type = '1')                                    # get the unit byte
     drivers_list[i]['unit'] = unit                                      # store unit in dictionary
-    dev_type = readUnpack(2, type ='b')                                 # grab bytes for type and subtype
-    drivers_list[i]['dev_type'] = dev_types[dev_type]
+    dev_type = readUnpack(2, type ='b')
+    try:
+        drivers_list[i]['dev_type'] = dev_types[dev_type]               # insert device type into dictionary
+    except:
+        drivers_list[i]['dev_type'] = 'Unknown'
+    SOSfile.seek(1,1)
+    block_num = readUnpack(2, type = 'b')                               # get block_num
+    if block_num != 0:                                                  # is block_num not zero?
+        drivers_list[i]['block_num'] = block_num                        # yes, store retrieved block_num value
+    else:                                                               # otherwise...
+        drivers_list[i]['block_num'] = 'Character Device or Undefined'  # log field as char device or undefined
+    mfg = readUnpack(2, type = 'b')                                     # read mfg bytes
+    try:
+        drivers_list[i]['mfg'] = mfgs[mfg]
+    except:
+        if 1 <= mfg <= 31:
+            drivers_list[i]['mfg'] = 'Apple Computer'
+        else:
+            drivers_list[i]['mfg'] = 'Unknown'
+
 
     print drivers_list[i]
 #    print drivers_list[i]['name_len']
