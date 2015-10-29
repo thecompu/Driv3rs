@@ -124,7 +124,7 @@ for i in range(0,len(drivers_list)):                                    # begin 
             drivers_list[i]['mfg'] = 'Apple Computer'
         else:
             drivers_list[i]['mfg'] = 'Unknown'
-
+    drivers_list[i]['version'] = '1.01c'
 
     print drivers_list[i]
 #    print drivers_list[i]['name_len']
