@@ -21,6 +21,13 @@ def readUnpack(bytes, **options):
         offset_unpacked = unpack ('< B', SOS)
         return int(ord(SOS))
 
+def nibblize(byte, **options):
+    if options.get("direction") == 'high':
+        return str(int(hex(byte >> 4), 0))
+    if options.get("direction") == 'low':
+        return str(int(hex(byte & 0x0F), 0))
+
+
 dev_types ={273: 'Character Device, Write-Only, Formatter',
             321: 'Character Device, Write-Only, RS232 Printer',         # dictionary for types and subtypes
             577: 'Character Device, Write-Only, Silentype',
@@ -118,15 +125,22 @@ for i in range(0,len(drivers_list)):                                    # begin 
         drivers_list[i]['block_num'] = 'Character Device or Undefined'  # log field as char device or undefined
     mfg = readUnpack(2, type = 'b')                                     # read mfg bytes
     try:
-        drivers_list[i]['mfg'] = mfgs[mfg]
+        drivers_list[i]['mfg'] = mfgs[mfg]                              # try to match key and place in dictionary
     except:
-        if 1 <= mfg <= 31:
-            drivers_list[i]['mfg'] = 'Apple Computer'
+        if 1 <= mfg <= 31:                                              # if exception, check if mfg is between 1 and 31
+            drivers_list[i]['mfg'] = 'Apple Computer'                   # yes, this is Apple Computer
         else:
-            drivers_list[i]['mfg'] = 'Unknown'
-    drivers_list[i]['version'] = '1.01c'
+            drivers_list[i]['mfg'] = 'Unknown'                          # no, this is unknown. log as such
+    atell = SOSfile.tell()
+    ver_byte0 = readUnpack(1, type = '1')                               # grab the V/v0 numbers | V = high-nibble, v0 = low-nibble
+    ver_byte1 = readUnpack(1, type = '1')                               # grab the v1/Q numbers | v1 = high-nibble, Q = low-nibble
+    V   = nibblize(ver_byte1, direction = 'high')                       # grab major version number as string
+    v0  = nibblize(ver_byte1, direction = 'low')                        # grab first minor version number (v0) as string
+    v1  = nibblize(ver_byte0, direction = 'high')                       # grab second minor version number (v1) as string
+    Q   = nibblize(ver_byte0, direction = 'low')                        # grab qualifier number. We only care about A (Alpha), B (Beta), or E (Experimental)
+    drivers_list[i]['version'] = V + '.' + v0 + v1 + Q
 
-    print drivers_list[i]
-#    print drivers_list[i]['name_len']
+    #print drivers_list[i]
+    print drivers_list[i]['version']
 
 SOSfile.close()
