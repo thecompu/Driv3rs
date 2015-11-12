@@ -131,16 +131,33 @@ for i in range(0,len(drivers_list)):                                    # begin 
             drivers_list[i]['mfg'] = 'Apple Computer'                   # yes, this is Apple Computer
         else:
             drivers_list[i]['mfg'] = 'Unknown'                          # no, this is unknown. log as such
-    atell = SOSfile.tell()
-    ver_byte0 = readUnpack(1, type = '1')                               # grab the V/v0 numbers | V = high-nibble, v0 = low-nibble
+    ver_byte0 = readUnpack(1, type = '1')                               # start version field -- grab the V/v0 numbers | V = high-nibble, v0 = low-nibble
     ver_byte1 = readUnpack(1, type = '1')                               # grab the v1/Q numbers | v1 = high-nibble, Q = low-nibble
     V   = nibblize(ver_byte1, direction = 'high')                       # grab major version number as string
     v0  = nibblize(ver_byte1, direction = 'low')                        # grab first minor version number (v0) as string
     v1  = nibblize(ver_byte0, direction = 'high')                       # grab second minor version number (v1) as string
     Q   = nibblize(ver_byte0, direction = 'low')                        # grab qualifier number. We only care about A (Alpha), B (Beta), or E (Experimental)
-    drivers_list[i]['version'] = V + '.' + v0 + v1 + Q
+    drivers_list[i]['version'] = V + '.' + v0 + v1 + Q                  # put version number into dictionary
 
-    #print drivers_list[i]
-    print drivers_list[i]['version']
-
+for i in range(0,len(drivers_list)):                                    # begin search for sub-drivers
+    link_ptr = drivers_list[i]['link_ptr']                              # grab link_ptr in dictionary
+    if link_ptr != 0x0000:                                              # is link_ptr not 0x0000?
+        sub_drivers = 0                                                 # initialize sub-driver count (initially 0)
+        sub_loop = True                                                 # setup loop for running through a driver with subs
+        while sub_loop :                                                # begin loop
+            SOSfile.seek(drivers_list[i]['location'],0)                 # reference SOF and seek to beginning of major driver
+            jump_distance = 4 + drivers_list[i]['comment_len'] \
+            + drivers_list[i]['link_ptr']                               # calculate distance needed to reach first sub-DIB
+            SOSfile.seek(jump_distance,1)                               # seek to beginning of sub-DIB
+            sub_sub_loop = True                                         # setup loop to run through sub-drivers
+            while sub_sub_loop:                                         # begin loop to move only through sub-
+                sub_link = readUnpack(2, type = 'b')                    # read link field of sub-driver
+                if sub_link != 0x0000:                                  # if link field is not zero...
+                    sub_drivers = sub_drivers + 1                       # increment sub_drivers count
+                    SOSfile.seek(32,1)                                  # seek to next sub-DIB ($22 bytes minus link field)
+                if sub_link == 0x0000:                                  # if link field is 0x0000
+                    sub_sub_loop = False                                # set inner loop to false
+            sub_loop = False                                            # set sub-driver loop to false
+            drivers_list[i]['sub_drivers'] = sub_drivers                # place total number in dictionary
+                                                                        # here we continue iterating through major drivers
 SOSfile.close()
