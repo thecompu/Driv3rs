@@ -1,5 +1,13 @@
-from struct import unpack
-import os
+from struct import unpack; from sys import argv
+
+args = argv
+usage = "\nUsage: python Driv3rs.py [input_file] [output_file]\n"
+
+if len(args) < 3:
+    print usage
+    exit()
+disk_img = args[1]
+output_file = args[2]
 
 def readUnpack(bytes, **options):
     if options.get("type") == 't':
@@ -39,9 +47,7 @@ dev_types ={273: 'Character Device, Write-Only, Formatter',
 
 mfgs =     {17491: 'David Schmidt'}                                     # dictionary for manufacturers
 
-print("\033c");                                                         # clear screen
-
-SOSfile = open('SOSCFFA.DRIVER', 'rb')                                  # open file to interrogate
+SOSfile = open(disk_img, 'rb')                                  # open file to interrogate
 filetype = readUnpack(8, type = 't')                                    # read first eight bytes and stick returned text into filetype
 
 if filetype == 'SOS DRVR':                                              # is filetype 'SOS DRVR'??
