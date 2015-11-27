@@ -7,7 +7,7 @@ if len(args) < 3:
     print usage
     exit()
 disk_img = args[1]
-output_file = args[2]
+output_csv = args[2]
 
 def readUnpack(bytes, **options):
     if options.get("type") == 't':
@@ -52,9 +52,7 @@ filetype = readUnpack(8, type = 't')                                    # read f
 
 if filetype == 'SOS DRVR':                                              # is filetype 'SOS DRVR'??
     print "This is a proper SOS.DRIVER file."                           # output, this is a proper file
-    print "Filetype is: %s." % (filetype)                               # output filetype found.
 else:                                                                   # otherwise....
-    print "Filetype is: %s." % (filetype)                               # output what was found
     print "This is not a proper SOS.DRIVER file"                        # ouput, this is not a proper SOS file
     exit()                                                              # nothing to be done, exit script
 
@@ -77,13 +75,9 @@ while loop :                                                            # establ
     else :                                                              # otherwise....
         drivers_list.append(driver)                                     # append a new list entry
         SOSfile.seek(rel_offset,1)                                      # jump (1 of 2) distance found in previous 2 bytes read
-        atell = SOSfile.tell()
         rel_offset = readUnpack(2, type = 'b')                          # read 2 bytes to set up next jump
-        atell = SOSfile.tell()
         SOSfile.seek(rel_offset,1)                                      # jump (2 of 2) distance found in previous two bytes
-        atell = SOSfile.tell()
         rel_offset = readUnpack(2, type = 'b')                          # we're now at the comment_len of a new major driver; read two bytes for length
-        atell = SOSfile.tell()
 
 for i in range(0,len(drivers_list)):                                    # begin loop to grab information from DIB
     SOSfile.seek(drivers_list[i]['comment_start'],0)                    # reference SOF and seek to beginning of major driver
@@ -148,8 +142,8 @@ for i in range(0,len(drivers_list)):                                    # begin 
 
 for i in range(0,len(drivers_list)):                                    # begin search for how many devices a driver can support
     link_ptr = drivers_list[i]['link_ptr']                              # grab link_ptr in dictionary
+    total_devs = 1                                                      # initialize devices count (initially 1)
     if link_ptr != 0x0000:                                              # is link_ptr not 0x0000?
-        total_devs = 1                                                  # initialize devices count (initially 1)
         SOSfile.seek(drivers_list[i]['dib_start'],0)                    # seek to beginning of major driver from start of file
         SOSfile.seek(drivers_list[i]['link_ptr'],1)                     # seek to beginning of sub-DIB
         sub_loop = True                                                 # setup loop to run through sub-drivers
@@ -160,7 +154,34 @@ for i in range(0,len(drivers_list)):                                    # begin 
                 SOSfile.seek(32,1)                                      # seek to next sub-DIB ($22 bytes minus link field)
             else:                                                       # else...
                 sub_loop = False                                        # set inner loop to false                                               # set sub-driver loop to false
-        drivers_list[i]['num_devices'] = total_devs                     # place total number in dictionary
+    drivers_list[i]['num_devices'] = total_devs                         # place total number in dictionary
 
-print drivers_list[4]
-SOSfile.close()
+print drivers_list[0]['dev_type']
+
+SOSfile.close()                                                         # no need for it anymore
+
+csvout = open(output_csv, 'w')
+csvout.write('comment_start,comment_len,comment_txt,dib_start,\
+link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,dev_type,\
+block_num,mfg,version\n')
+
+for i in range(0,len(drivers_list)):
+    csvout.write(hex(drivers_list[i]['comment_start']) + ',' + \
+    hex(drivers_list[i]['comment_len']) + ',' + \
+    drivers_list[i]['comment_txt'] + ',' + \
+    hex(drivers_list[i]['dib_start']) + ',' + \
+    hex(drivers_list[i]['link_ptr']) + ',' + \
+    hex(drivers_list[i]['entry']) + ',' + \
+    hex(drivers_list[i]['name_len']) + ',' + \
+    drivers_list[i]['name'] + ',' + \
+    '"' + drivers_list[i]['flag'] + '"' + ',' + \
+    str(drivers_list[i]['slot_num']) + ',' + \
+    str(drivers_list[i]['num_devices']) + ',' + \
+    str(drivers_list[i]['unit']) + ','  + \
+    '"' + drivers_list[i]['dev_type'] + '"' + ',' + \
+    str(drivers_list[i]['block_num']) + ',' + \
+    drivers_list[i]['mfg'] + ',' + \
+    str(drivers_list[i]['version'])
+    )
+    csvout.write('\n')
+csvout.close()
