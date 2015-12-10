@@ -1,4 +1,4 @@
-#Driv3rs.py 
+#Driv3rs.py
 ###A script to help catalog SOS.DRIVER files.
 
 ##Usage:
@@ -45,4 +45,5 @@ Here's the suggested command-line to enter when exporting using AppleCommander.
 
 ##Links:
 AppleCommander: (http://applecommander.sourceforge.net/)
+
 Java: (https://www.java.com/en/download/)
