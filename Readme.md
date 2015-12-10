@@ -1,6 +1,7 @@
 #Driv3rs.py -- A script to help catalog SOS.DRIVER files.
 
-##Usage: `$python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]`
+##Usage:
+`$python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]`
 
 ##Description:
 
