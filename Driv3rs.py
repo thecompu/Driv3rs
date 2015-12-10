@@ -271,7 +271,6 @@ SOSfile.close()
 # structured like the structure in the Driver Writer's Manual.
 # first, check if file exists and, if so, omit header
 exists = os.path.exists(output_csv)
-print exists
 if exists == False:
     csvout = open(output_csv, 'w')
     csvout.write('output_csv,comment_start,comment_len,comment_txt,\

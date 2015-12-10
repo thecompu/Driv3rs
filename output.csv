@@ -9,3 +9,8 @@ output.csv,0xa94,0x0,None,0xa98,0x0,0x10b,0xa,.SILENTYPE,"INACTIVE",None,1,0,"Ch
 output.csv,0x1d72,0x0,None,0x1d76,0x0,0xc0,0x8,.PRINTER,"ACTIVE",None,1,0,"Character Device, Write-Only, RS232 Printer",Character Device or Undefined,Apple Computer,1.10
 output.csv,0x20fc,0x0,None,0x2100,0x0,0x10a,0x8,.CONSOLE,"ACTIVE",None,1,0,"Character Device, Read-Write, System Console",Character Device or Undefined,Apple Computer,1.12
 output.csv,0x34ee,0x4e,Apple /// CFFA3000 (Compact Flash For Apple 3000) Driver by David Schmidt 2011,0x3540,0x22,0x132,0xb,.CFFA3000D1,"ACTIVE",1,7,0,"Block Device, CFFA3000",Character Device or Undefined,David Schmidt,1.00
+output.csv,0x52c,0x0,None,0x530,0x43e,0x3bf,0x6,.FMTD1,"ACTIVE, Load on Boundary",None,3,0,"Character Device, Write-Only, Formatter",280,Apple Computer,1.10
+output.csv,0xa94,0x0,None,0xa98,0x0,0x10b,0xa,.SILENTYPE,"INACTIVE",None,1,0,"Character Device, Write-Only, Silentype",Character Device or Undefined,Apple Computer,1.04
+output.csv,0x1d72,0x0,None,0x1d76,0x0,0xc0,0x8,.PRINTER,"ACTIVE",None,1,0,"Character Device, Write-Only, RS232 Printer",Character Device or Undefined,Apple Computer,1.10
+output.csv,0x20fc,0x0,None,0x2100,0x0,0x10a,0x8,.CONSOLE,"ACTIVE",None,1,0,"Character Device, Read-Write, System Console",Character Device or Undefined,Apple Computer,1.12
+output.csv,0x34ee,0x4e,Apple /// CFFA3000 (Compact Flash For Apple 3000) Driver by David Schmidt 2011,0x3540,0x22,0x132,0xb,.CFFA3000D1,"ACTIVE",1,7,0,"Block Device, CFFA3000",Character Device or Undefined,0x4450,1.00
