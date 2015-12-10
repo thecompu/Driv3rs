@@ -1,10 +1,11 @@
 # use unpack from struct and argv from sys
 from struct import unpack; from sys import argv
+import os.path
 
 # setup args as a variable to hold argv -- there will be three
 # in total script, input file, output file.
 args = argv
-usage = "\nUsage: python Driv3rs.py [disk_img] [output_file.csv]\n"
+usage = "\nUsage: python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]\n"
 
 # check that user passed required number of arguments
 if len(args) < 3:
@@ -79,7 +80,7 @@ else:
 # found major drivers for upcoming loop and initalize a list to
 # hold driver dictionaries.
 rel_offset = readUnpack(2, type = 'b')
-print "The first relative offset value is", rel_offset, hex(rel_offset)
+#print "The first relative offset value is", rel_offset, hex(rel_offset)
 drivers = 0
 drivers_list=[]
 
@@ -213,7 +214,7 @@ for i in range(0,len(drivers_list)):
         if 1 <= mfg <= 31:
             drivers_list[i]['mfg'] = 'Apple Computer'
         else:
-            drivers_list[i]['mfg'] = 'Unknown'
+            drivers_list[i]['mfg'] = hex(mfg)
 
     # version bytes are integer values stored across two bytes.
     # a nibble corresponds to a major version number, one of two minor
@@ -268,13 +269,20 @@ SOSfile.close()
 
 # here begins writing out the CSV file. the order is mainly
 # structured like the structure in the Driver Writer's Manual.
-csvout = open(output_csv, 'w')
-csvout.write('comment_start,comment_len,comment_txt,dib_start,\
-link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,dev_type,\
-block_num,mfg,version\n')
+# first, check if file exists and, if so, omit header
+exists = os.path.exists(output_csv)
+print exists
+if exists == False:
+    csvout = open(output_csv, 'w')
+    csvout.write('output_csv,comment_start,comment_len,comment_txt,\
+    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
+    dev_type,block_num,mfg,version\n')
+else:
+    csvout = open(output_csv, 'a')
 
 for i in range(0,len(drivers_list)):
-    csvout.write(hex(drivers_list[i]['comment_start']) + ',' + \
+    csvout.write(output_csv + ',' + \
+    hex(drivers_list[i]['comment_start']) + ',' + \
     hex(drivers_list[i]['comment_len']) + ',' + \
     drivers_list[i]['comment_txt'] + ',' + \
     hex(drivers_list[i]['dib_start']) + ',' + \

@@ -1,104 +1,42 @@
-# Python-III-Git
-A Python Script to open Apple III DSK files, export SOS.DRIVER, and catalog what drivers are installed.
+Driv3rs.py -- A script to help catalog SOS.DRIVER files.
 
-Work History
+Usage: $python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]
 
-8/1/2015 -- Approx.
-Initial Commit
+Description:
 
-8/26/2015
-Goals Defined:
+Driv3rs.py is a Python script written for Apple /// fans. The Apple /// was one of the first computers to introduce the concept of device drivers, small programs that allowed a user to interact with hardware on-board, internally installed, or attached to the computer externally. Over the course of the few years of the Apple ///'s existence, hardware manufacturers built devices and wrote device drivers to support those devices. However, the Apple /// simply didn't achieve as much prominence as the Apple II-series. Therefore, a lot of drivers remain either undiscovered or long-forgotten.
 
-1. Obtain the name of the .dsk image from the command-line (like: python my_script.py my_disk_image.dsk)
+Driv3rs.py hopes to help that situation. Given an SOS.DRIVER file properly exported from an imaged Apple /// disk, Driv3rs.py can produce a Comma Separated Values (CSV) file. This CSV contains a whole host of information including device name, commentary, manufacturer, among many other potentially useful pieces of information.
 
-2. For each driver:
-    a. File offset
-    b. List the name of the driver
-    c. Whether it's char or block device
-    d. Manufacturer id
-    e. Version number
+When using an Apple ///, users would run a utility called the System Configuration Program (SCP) to install and uninstall drivers. Once the user chose all the needed drivers, the user would create a new bootable floppy disk. This disk contained the files necessary to boot Apple's Sophisticated Operating System (SOS) and the companion SOS.DRIVER file. From that driver file, all the needed drivers would load into memory upon boot.
 
-	3. Print it all on one line in a file, delimited with commas
+Driv3rs.py works by opening the SOS.DRIVER file and then walks the Device Information Block (DIB) for every driver found within. The information gathered closely parallels the outlined DIB published in Apple's "Apple /// SOS Device Driver Writer's Guide." All information is eventually stored in the output CSV file.
 
-Example:
+Requirements:
 
-$ python sos.extract.py -disk "my_disk_image.dsk" -driver [SOS.DRIVER] -output [diskname.csv]
+* Imaged Apple /// disk
+* SOS.DRIVER files to be searched
+* AppleCommander
+* Java for AppleCommander (Java 6 if you want to use AppleCommander's GUI).
 
-0530,FMT_D1,BLOCK,01,1.1
+Suggested Workflow:
 
-096e,FMT_D2,BLOCK,01,1.1
+1. Acquire an imaged Apple /// floppy disk.
+2. Use AppleCommander's CLI functions to export the SOS.DRIVER file from the imaged disk. (See notes below on AppleCommander usage.)
+3. Rename the exported SOS.DRIVER file to something that will clue you into where the SOS.DRIVER file came from.
+4. Place the SOS.DRIVER file in same directory as Driv3rs.py.
+5. Run the script according to the Usage section above.
 
-0990,FMT_D3,BLOCK,01,1.1
+Depending upon the name you chose for the output file, a CSV file will be generated with driver information found inside the SOS.DRIVER file.
 
-09B2,FMT_D4,BLOCK,01,1.1
+(Note: If you choose the output name of a CSV file that already exists, Driv3rs.py will append the new SOS.DRIVER file's contents to the existing CSV file. This is handy if you're processing multiple SOS.DRIVER files.)
 
-0a00,SILENTYPE,CHAR,01,4.0c
+Notes about AppleCommander:
 
-0b00,DMP,CHAR,01,1.0
+AppleCommander is a utility written in Java for Apple II users. It allows manipulation of many different types of Apple II-based imaged floppy disks, including disks formatted in DOS 3.2, 3.3 and ProDOS. Apple's Sophisticated Operating System (SOS) is ProDOS's predecessor. Therefore, AppleCommander ProDOS features can be used to easily export files from SOS disks.
 
-0c00,CONSOLE,CHAR,01,1.0
+Because AppleCommander is written in Java, you must have Java on your workstation in order to use it. AppleCommander's command-line functions work fine in Java 8. However, AppleCommander's GUI requires the 32-bit version of Java 6 which is very old at this date and is vulnerable to security issues. In short, we recommended using AppleCommander's command-line features in Java 8 rather than installing Java 6.
 
-8/26/2015
-Problems to solve (in no particular order):
+Here's the suggested command-line to enter when exporting using AppleCommander.
 
-1. How to write to a file.
-
-2. How to seek to an offset. Can that be done in HEX?
-
-3. How best to approach? Should we run through the file multiple times, marking names and offsets then returning to grab data? Or is one-time best?
-
-4. Can anything be turned into functions?
-
-9/7/2015
-
-Completely removed the prompts as they were a pain during troubleshooting.
-
-Attempted to create a function that will:
-1. Take the 2-byte offset found in the file and unpack it then,
-2. Convert the resultant tuple into an integer.
-
-I am having trouble with the return portion. I don't really know how to do it. Will continue to play.
-
-Implemented a (very) rudimentary IF/ELSE that checks the first eight bytes of the driver file to see if "SOS DRVR" exist. If not, the script ends. If so, we will continue. This entailed unpacking the data as string-data, converting the resultant tuple into an str, then checking what's there. I did verify via HEX edit that if the string is not "SOS DRVR," the else will be taken.
-
-Is there a way to run the IF/ELSE against the contents of the tuple? It would save my having to convert from tuple to str.
-
-(edit: Yes, there is. if element in tuple)
-
-I played further with the function. I am still not able to get it to work, but I am feeling a little more comfortable with the idea.
-
-9/12/2015
-
-After reading little pieces about functions throughout the week and playing with tutorials, I have a function that will take a number of bytes as an argument, read those bytes, unpack into little-endian as hexadecimal, then return the resultant tuple as an integer. Right now, this function only handles two bytes which is what we need for the jumps. Later, I'll try to figure out what to do for strings which requires a different unpack procedure. It may work better as its own function or part of the same. I don't know.
-
-The function is called inside a while loop that indefinitely executes until the encountered two-byte value is FFFF.
-
-It's working... more or less.
-
-9/26/2015
-
-Life sucks. Fucking anxiety. Fucking depression.
-
-Anyway, I cleaned up a lot of the code and I also implemented a counter for the number of drivers encountered.
-
-Later, I implemented creating nested dictionaries based upon how many drivers were encountered. I don't know if this type of creation will work as I go back through the drivers to get information on the drivers themselves, but I think it's a good start.
-
-Current sample run:
-
-IN: python 3Slurp.py
-OUT: This is a proper SOS file.
-Filetype is: SOS DRVR.
-The first offset value is 0x522
-Total drivers encountered:  4
-{'Driver_3': {'Offset': '0x2ea'}, 'Driver_2': {'Offset': '0xeac'}, 'Driver_1': {'Offset': '0x4a4'}, 'Driver_4': {'Offset': '0xf86'}}
-
-I'll want to wind up with something like this (formatted for easier reading)
-
-{
-  'Driver_1' :
-  {
-    'Offset' : '0x4a4',
-    'Name' : 'CONSOLE',
-    etc...
-  }
-}
+$java -jar AppleCommander-1.3.5.13-ac.jar -g [ImagedDisk.dsk] [SOS.DRIVER] [ExportedFilename]
