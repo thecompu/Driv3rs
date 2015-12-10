@@ -273,14 +273,14 @@ SOSfile.close()
 exists = os.path.exists(output_csv)
 if exists == False:
     csvout = open(output_csv, 'w')
-    csvout.write('output_csv,comment_start,comment_len,comment_txt,\
+    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,\
     dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
     dev_type,block_num,mfg,version\n')
 else:
     csvout = open(output_csv, 'a')
 
 for i in range(0,len(drivers_list)):
-    csvout.write(output_csv + ',' + \
+    csvout.write(disk_img + ',' + \
     hex(drivers_list[i]['comment_start']) + ',' + \
     hex(drivers_list[i]['comment_len']) + ',' + \
     drivers_list[i]['comment_txt'] + ',' + \
