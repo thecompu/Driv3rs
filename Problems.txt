@@ -1,5 +1,0 @@
-Problems to Solve:
-
-1. How to march through the file.
-2. How to load a number of bytes at a specific offset? (e.g. Load 2 bytes from 0x04dc)
-3. How to write to a file.
