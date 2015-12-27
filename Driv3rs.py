@@ -118,7 +118,7 @@ for i in range(0,len(drivers_list)):
     drivers_list[i]['comment_len'] = comment_len
     if comment_len != 0x0000:
         comment_txt = readUnpack(comment_len, type = 't')
-        drivers_list[i]['comment_txt'] = comment_txt
+        drivers_list[i]['comment_txt'] = comment_txt.replace('"', "''") # quotation marks will mess up csv
     else:
         drivers_list[i]['comment_txt'] = 'None'
 
@@ -283,7 +283,7 @@ for i in range(0,len(drivers_list)):
     csvout.write(disk_img + ',' + \
     hex(drivers_list[i]['comment_start']) + ',' + \
     hex(drivers_list[i]['comment_len']) + ',' + \
-    drivers_list[i]['comment_txt'] + ',' + \
+    '"' + drivers_list[i]['comment_txt'] + '"' + ',' + \
     hex(drivers_list[i]['dib_start']) + ',' + \
     hex(drivers_list[i]['link_ptr']) + ',' + \
     hex(drivers_list[i]['entry']) + ',' + \
