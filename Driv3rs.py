@@ -70,9 +70,9 @@ SOSfile = open(disk_img, 'rb')
 filetype = readUnpack(8, type = 't')
 
 if filetype == 'SOS DRVR':
-    print "This is a proper SOS.DRIVER file."
+    print "Valid SOS.DRIVER file:   {}".format(disk_img)
 else:
-    print "This is not a proper SOS.DRIVER file"
+    print "INVALID SOS.DRIVER file: {}".format(disk_img)
     exit()
 
 # read two bytes immediately after "SOS DRVR" to determine jump
