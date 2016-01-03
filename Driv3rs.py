@@ -1,5 +1,6 @@
 # use unpack from struct and argv from sys
 from struct import unpack; from sys import argv
+import hashlib
 import os.path
 
 # setup args as a variable to hold argv -- there will be three
@@ -96,6 +97,20 @@ while loop :
     driver = {}
     SOSfile.seek(rel_offset,1)
     driver['comment_start'] = SOSfile.tell()
+    # record an md5 hash of the entire driver for comparison
+    # initialize a hash on the driver we just reached (which might be an end marker)
+    driver['md5'] = hashlib.md5()
+    # then if we are starting the second or later driver, feed the prior driver
+    # (which we now can find) to the hash function for the prior driver
+    # which is accomplished by clunkily seeking back and re-reading and then
+    # seeking to current position again
+    if drivers_list != []:
+        SOSfile.seek(drivers_list[-1]['comment_start'], 0)
+        whole_driver = SOSfile.read(driver['comment_start'] - drivers_list[-1]['comment_start'])
+        drivers_list[-1]['md5'].update(whole_driver)
+        SOSfile.seek(driver['comment_start'], 0)
+    # and now that we are back, continue reading to see if this driver is to be
+    # added or if we are actually just looking at the end mark.
     rel_offset = readUnpack(2, type = 'b')
     if rel_offset == 0xFFFF:
         loop = False
@@ -275,7 +290,7 @@ if exists == False:
     csvout = open(output_csv, 'w')
     csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,\
     dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
-    dev_type,block_num,mfg,version\n')
+    dev_type,block_num,mfg,version,md5\n')
 else:
     csvout = open(output_csv, 'a')
 
@@ -296,7 +311,8 @@ for i in range(0,len(drivers_list)):
     '"' + drivers_list[i]['dev_type'] + '"' + ',' + \
     str(drivers_list[i]['block_num']) + ',' + \
     drivers_list[i]['mfg'] + ',' + \
-    str(drivers_list[i]['version'])
+    str(drivers_list[i]['version']) + ',' + \
+    drivers_list[i]['md5'].hexdigest()
     )
     csvout.write('\n')
 csvout.close()
