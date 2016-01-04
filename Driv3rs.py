@@ -289,8 +289,8 @@ SOSfile.close()
 exists = os.path.exists(output_csv)
 if exists == False:
     csvout = open(output_csv, 'w')
-    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,
-    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,
+    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,\
+    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
     dev_type,block_num,mfg,version,md5\n')
 else:
     csvout = open(output_csv, 'a')
