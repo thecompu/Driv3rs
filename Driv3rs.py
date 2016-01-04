@@ -45,6 +45,13 @@ def nibblize(byte, **options):
     if options.get("direction") == 'low':
         return str(int(hex(byte & 0x0F), 0))
 
+# this function takes bytes as a parameter, reads those bytes
+# in the file, and hashes them.
+def md5hash(bytes):
+    SOS = SOSfile.read(bytes)
+    hash = hashlib.md5(SOS)
+    return hash.hexdigest()
+
 # dictionary for device types and sub types.
 dev_types ={273: 'Character Device, Write-Only, Formatter',
             321: 'Character Device, Write-Only, RS232 Printer',
@@ -97,20 +104,6 @@ while loop :
     driver = {}
     SOSfile.seek(rel_offset,1)
     driver['comment_start'] = SOSfile.tell()
-    # record an md5 hash of the entire driver for comparison
-    # initialize a hash on the driver we just reached (which might be an end marker)
-    driver['md5'] = hashlib.md5()
-    # then if we are starting the second or later driver, feed the prior driver
-    # (which we now can find) to the hash function for the prior driver
-    # which is accomplished by clunkily seeking back and re-reading and then
-    # seeking to current position again
-    if drivers_list != []:
-        SOSfile.seek(drivers_list[-1]['comment_start'], 0)
-        whole_driver = SOSfile.read(driver['comment_start'] - drivers_list[-1]['comment_start'])
-        drivers_list[-1]['md5'].update(whole_driver)
-        SOSfile.seek(driver['comment_start'], 0)
-    # and now that we are back, continue reading to see if this driver is to be
-    # added or if we are actually just looking at the end mark.
     rel_offset = readUnpack(2, type = 'b')
     if rel_offset == 0xFFFF:
         loop = False
@@ -253,6 +246,14 @@ for i in range(0,len(drivers_list)):
     else:
         drivers_list[i]['version'] = V + '.' + v0 + v1
 
+    # calculate distance from beginning of current driver to
+    # next driver. reposition pointer to beginning of current
+    # driver. send number of bytes to read to hashing function
+    bytes_to_read = drivers_list[i]['comment_start'] + \
+    drivers_list[+1]['comment_start']
+    SOSfile.seek(drivers_list[i]['comment_start'],0)
+    drivers_list[i]['md5'] = md5hash(bytes_to_read)
+
 # here we run a new loop to determine how many other DIBs exist
 # under a major driver. This is primarily for drivers that are designed
 # to support more than one device. for instance, the CFFA3000 is
@@ -288,8 +289,8 @@ SOSfile.close()
 exists = os.path.exists(output_csv)
 if exists == False:
     csvout = open(output_csv, 'w')
-    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,\
-    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
+    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,
+    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,
     dev_type,block_num,mfg,version,md5\n')
 else:
     csvout = open(output_csv, 'a')
@@ -312,7 +313,7 @@ for i in range(0,len(drivers_list)):
     str(drivers_list[i]['block_num']) + ',' + \
     drivers_list[i]['mfg'] + ',' + \
     str(drivers_list[i]['version']) + ',' + \
-    drivers_list[i]['md5'].hexdigest()
+    drivers_list[i]['md5']
     )
     csvout.write('\n')
 csvout.close()
