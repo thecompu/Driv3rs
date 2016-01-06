@@ -249,10 +249,11 @@ for i in range(0,len(drivers_list)):
     # calculate distance from beginning of current driver to
     # next driver. reposition pointer to beginning of current
     # driver. send number of bytes to read to hashing function
-    bytes_to_read = drivers_list[i]['comment_start'] + \
-    drivers_list[+1]['comment_start'] - 4
-    SOSfile.seek(drivers_list[i]['comment_start'] + 4,0)
-    drivers_list[i]['md5'] = md5hash(bytes_to_read)
+    ## DISABLED FOR DEBUGGING ## EXPECT BLANK FIELDS IN the CSV
+    #bytes_to_read = drivers_list[i]['comment_start'] + \
+    #drivers_list[+1]['comment_start'] - 4
+    #SOSfile.seek(drivers_list[i]['comment_start'] + 4,0)
+    #drivers_list[i]['md5'] = md5hash(bytes_to_read)
 
 # here we run a new loop to determine how many other DIBs exist
 # under a major driver. This is primarily for drivers that are designed
