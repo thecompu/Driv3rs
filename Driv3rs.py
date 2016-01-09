@@ -45,13 +45,6 @@ def nibblize(byte, **options):
     if options.get("direction") == 'low':
         return str(int(hex(byte & 0x0F), 0))
 
-# this function takes bytes as a parameter, reads those bytes
-# in the file, and hashes them.
-def md5hash(bytes):
-    SOS = SOSfile.read(bytes)
-    hash = hashlib.md5(SOS)
-    return hash.hexdigest()
-
 # dictionary for device types and sub types.
 dev_types ={273: 'Character Device, Write-Only, Formatter',
             321: 'Character Device, Write-Only, RS232 Printer',
@@ -131,8 +124,8 @@ for i in range(0,len(drivers_list)):
         drivers_list[i]['comment_txt'] = 'None'
 
     # these two bytes are the intermediate offset value used to jump
-    # to the next major driver. We skip here while going through the DIB.
-    SOSfile.seek(2,1)
+    # to the next major driver.  This is useful for computing the md5 hash.
+    drivers_list[i]['next_driver'] = readUnpack(2, type = 'b')
 
     # Officially, the link pointer is the beginning of the DIB.
     # comments are optional. We log dib_start to indicate where the
@@ -246,14 +239,25 @@ for i in range(0,len(drivers_list)):
     else:
         drivers_list[i]['version'] = V + '.' + v0 + v1
 
-    # calculate distance from beginning of current driver to
-    # next driver. reposition pointer to beginning of current
-    # driver. send number of bytes to read to hashing function
-    ## DISABLED FOR DEBUGGING ## EXPECT BLANK FIELDS IN the CSV
-    #bytes_to_read = drivers_list[i]['comment_start'] + \
-    #drivers_list[+1]['comment_start'] - 4
-    #SOSfile.seek(drivers_list[i]['comment_start'] + 4,0)
-    #drivers_list[i]['md5'] = md5hash(bytes_to_read)
+    # device configuration block length
+    dcb_length = readUnpack(2, type = 'b')
+    drivers_list[i]['dcb_length'] = dcb_length
+
+    # calculate an md5 hash of the entire driver and of just the code
+    # portion
+    SOSfile.seek(drivers_list[i]['comment_start'], 0)
+    # configuration bytes include the comment and parameters that can be changed in SCP
+    config_bytes = SOSfile.read(4 + drivers_list[i]['comment_len'] + drivers_list[i]['entry'])
+    # code bytes contain the region between the entry point and the next driver
+    code_bytes = SOSfile.read(drivers_list[i]['next_driver'] - drivers_list[i]['entry'])
+    # Hash just the code portion
+    code_md5 = hashlib.md5(code_bytes)
+    # Hash the whole driver, which will include both code and parameters
+    driver_md5 = hashlib.md5(config_bytes)
+    driver_md5.update(code_bytes)
+    # Store the resulting hash digest hex strings
+    drivers_list[i]['driver_md5'] = driver_md5.hexdigest()
+    drivers_list[i]['code_md5'] = code_md5.hexdigest()
 
 # here we run a new loop to determine how many other DIBs exist
 # under a major driver. This is primarily for drivers that are designed
@@ -292,7 +296,7 @@ if exists == False:
     csvout = open(output_csv, 'w')
     csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,\
     dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,\
-    dev_type,block_num,mfg,version,md5\n')
+    dev_type,block_num,mfg,version,dcb_length,driver_md5,code_md5\n')
 else:
     csvout = open(output_csv, 'a')
 
@@ -314,7 +318,9 @@ for i in range(0,len(drivers_list)):
     str(drivers_list[i]['block_num']) + ',' + \
     drivers_list[i]['mfg'] + ',' + \
     str(drivers_list[i]['version']) + ',' + \
-    drivers_list[i]['md5']
+    str(drivers_list[i]['dcb_length']) + ',' + \
+    drivers_list[i]['driver_md5'] + ',' + \
+    drivers_list[i]['code_md5']
     )
     csvout.write('\n')
 csvout.close()
