@@ -1,4 +1,4 @@
-SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,    dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,    dev_type,block_num,mfg,version,dcb_length,driver_md5,code_md5
+SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,dev_type,block_num,mfg,version,dcb_length,driver_md5,code_md5
 EXAMPLE.SOS.DRIVER,0x52c,0x0,"None",0x530,0x43e,0x3bf,0x6,.FMTD1,"ACTIVE, Load on Boundary",None,3,0,"Character Device, Write-Only, Formatter",280,Apple Computer,1.10,0,b2a1c11d43f86c8857d243008a40f93f,4d61c0816eaf51db819de7007c83c2df
 EXAMPLE.SOS.DRIVER,0xa94,0x0,"None",0xa98,0x0,0x10b,0xa,.SILENTYPE,"INACTIVE",None,1,0,"Character Device, Write-Only, Silentype",Character Device or Undefined,Apple Computer,1.04,17,ca6db71e02668bbdad801ec1c3a17fce,3c7a572346944991f88ed502669e249d
 EXAMPLE.SOS.DRIVER,0x1d72,0x0,"None",0x1d76,0x0,0xc0,0x8,.PRINTER,"ACTIVE",None,1,0,"Character Device, Write-Only, RS232 Printer",Character Device or Undefined,Apple Computer,1.10,5,cdccaf496ea198eb3aef21b36156c028,719171eb8eb663fb1d21a0809bc44ceb
