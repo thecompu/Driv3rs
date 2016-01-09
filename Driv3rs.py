@@ -6,7 +6,15 @@ import os.path
 # setup args as a variable to hold argv -- there will be three
 # in total script, input file, output file.
 args = argv
-usage = "\nUsage: python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]\n"
+usage = """
+****************************************************************
+* Driv3rs.py - A tiny Python script to help catalog drivers on *
+* imaged Apple /// disks.  By Mike Whalen, Michael Sternberg   *
+* and Paul Hagstrom. Please submit pull requests to Github.    *
+*             https://github.com/thecompu/Driv3rs              *
+****************************************************************
+\nUsage: python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]\n
+"""
 
 # check that user passed required number of arguments
 if len(args) < 3:
@@ -64,15 +72,6 @@ dev_types ={273: 'Character Device, Write-Only, Formatter',
 # from 1-31.
 mfgs =     {17491: 'David Schmidt'}
 
-
-print """
-****************************************************************
-* Driv3rs.py - A tiny Python script to help catalog drivers on *
-* imaged Apple /// disks. By Paul Hagstrom, Michael Sternberg  *
-* & Mike Whalen. Please submit pull requests to Github.        *
-*             https://github.com/thecompu/Driv3rs              *
-****************************************************************
-"""
 
 # open SOS.DRIVER file to interrogate, then read first
 # eight bytes and determine if file is actual SOS.DRIVER file.
