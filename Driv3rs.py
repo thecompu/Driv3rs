@@ -64,6 +64,16 @@ dev_types ={273: 'Character Device, Write-Only, Formatter',
 # from 1-31.
 mfgs =     {17491: 'David Schmidt'}
 
+
+print """
+****************************************************************
+* Driv3rs.py - A tiny Python script to help catalog drivers on *
+* imaged Apple /// disks. By Paul Hagstrom, Michael Sternberg  *
+* & Mike Whalen. Please submit pull requests to Github.        *
+*             https://github.com/thecompu/Driv3rs              *
+****************************************************************
+"""
+
 # open SOS.DRIVER file to interrogate, then read first
 # eight bytes and determine if file is actual SOS.DRIVER file.
 # will be replaced with logic to read full disk images (PRODOS)
@@ -75,6 +85,7 @@ if filetype == 'SOS DRVR':
 else:
     print "INVALID SOS.DRIVER file: {}".format(disk_img)
     exit()
+
 
 # read two bytes immediately after "SOS DRVR" to determine jump
 # to first major driver. Print out what's found. Start a count of
