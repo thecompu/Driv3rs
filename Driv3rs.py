@@ -1,28 +1,29 @@
 # use unpack from struct and argv from sys
-from struct import unpack; from sys import argv
+from struct import unpack; import argparse
 import hashlib
 import os.path
-
-# setup args as a variable to hold argv -- there will be three
-# in total script, input file, output file.
-args = argv
-usage = """
+ 
+parser = argparse.ArgumentParser(
+    prog='Driv3rs.py',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description='''\
 ****************************************************************
 * Driv3rs.py - A tiny Python script to help catalog drivers on *
 * imaged Apple /// disks.  By Mike Whalen, Michael Sternberg   *
 * and Paul Hagstrom. Please submit pull requests to Github.    *
 *             https://github.com/thecompu/Driv3rs              *
 ****************************************************************
-\nUsage: python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]\n
-"""
+''')
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-rh", "--rawhex", action="store_true", help="Store hex values in CSV")
+group.add_argument("-rd", "--rawdec", action="store_true", help="Store decimal values in CSV")
+parser.add_argument("sosfile", help="sos.driver file to parse")
+parser.add_argument("csvfile", help="csv file to create")
+args = parser.parse_args()
 
-# check that user passed required number of arguments
-if len(args) < 3:
-    print usage
-    exit()
 # stick passed arugments into variables for later
-disk_img = args[1]
-output_csv = args[2]
+disk_img = args.sosfile
+output_csv = args.csvfile
 
 # this function unpacks several read operations --
 # text, binary, and single-byte. Each uses unpack from
@@ -120,6 +121,10 @@ while loop :
 # utilizing the offsets found, we now push through each Device information
 # Block to log information about a driver. Comments therein.
 
+# For nearly all entries, we write decimal values to our initial dictionaries
+# then convert to desired output at csv time. Excluded would be ascii strings
+# and the version numbers.
+
 # first deal with comment length and comment text.
 # comment length is two bytes (either the length in hex or 0x0000)
 # log both to list/dictionary
@@ -165,21 +170,13 @@ for i in range(0,len(drivers_list)):
     # or shall be loaded on a page boundary. This is set up in
     # the System Configuration Program
     flag = readUnpack(1, type = '1')
-    if flag == 192:
-        drivers_list[i]['flag'] = 'ACTIVE, Load on Boundary'
-    elif flag == 128:
-        drivers_list[i]['flag'] = 'ACTIVE'
-    else:
-        drivers_list[i]['flag'] = 'INACTIVE'
+    drivers_list[i]['flag'] = flag
 
     # if the driver is for a card that is loaded into a slot
     # and that slot has been defined in the SCP and placed into
     # the current SOS.DRIVER file, we log it here.
     slot_num = readUnpack(1, type = '1')
-    if slot_num == 0:
-        drivers_list[i]['slot_num'] = 'None'
-    else:
-        drivers_list[i]['slot_num'] = slot_num
+    drivers_list[i]['slot_num'] = slot_num
 
     # the unit byte is concerned with the device number encountered.
     # for the major drivers, it's always 0 and if there are other
@@ -194,10 +191,7 @@ for i in range(0,len(drivers_list)):
     # The type is determined via two bytes. The LSB is the sub-type
     # and the MSB is the type.
     dev_type = readUnpack(2, type ='b')
-    try:
-        drivers_list[i]['dev_type'] = dev_types[dev_type]
-    except:
-        drivers_list[i]['dev_type'] = 'Unknown'
+    drivers_list[i]['dev_type'] = dev_type
 
     # we skip the Filler byte ($19) as Apple reserved it.
     SOSfile.seek(1,1)
@@ -207,10 +201,7 @@ for i in range(0,len(drivers_list)):
     # we log the block number defined or that the the device is
     # a character device. otherwise Undefined
     block_num = readUnpack(2, type = 'b')
-    if block_num != 0:
-        drivers_list[i]['block_num'] = block_num
-    else:
-        drivers_list[i]['block_num'] = 'Character Device or Undefined'
+    drivers_list[i]['block_num'] = block_num
 
     # the manufacturer byte was ill-defined at the time the driver
     # writer's manual was published. 1 through 31 were reserved for
@@ -219,13 +210,7 @@ for i in range(0,len(drivers_list)):
     # and the CFFA3000 and populated a dictionary. This dictionary
     # will get more k/v pairs as time goes on.
     mfg = readUnpack(2, type = 'b')
-    try:
-        drivers_list[i]['mfg'] = mfgs[mfg]
-    except:
-        if 1 <= mfg <= 31:
-            drivers_list[i]['mfg'] = 'Apple Computer'
-        else:
-            drivers_list[i]['mfg'] = hex(mfg)
+    drivers_list[i]['mfg']=mfg 
 
     # version bytes are integer values stored across two bytes.
     # a nibble corresponds to a major version number, one of two minor
@@ -311,24 +296,127 @@ else:
     csvout = open(output_csv, 'a')
 
 for i in range(0,len(drivers_list)):
-    csvout.write(disk_img + ',' + \
-    hex(drivers_list[i]['comment_start']) + ',' + \
-    hex(drivers_list[i]['comment_len']) + ',' + \
-    '"' + drivers_list[i]['comment_txt'] + '"' + ',' + \
-    hex(drivers_list[i]['dib_start']) + ',' + \
-    hex(drivers_list[i]['link_ptr']) + ',' + \
-    hex(drivers_list[i]['entry']) + ',' + \
-    hex(drivers_list[i]['name_len']) + ',' + \
-    drivers_list[i]['name'] + ',' + \
-    '"' + drivers_list[i]['flag'] + '"' + ',' + \
-    str(drivers_list[i]['slot_num']) + ',' + \
-    str(drivers_list[i]['num_devices']) + ',' + \
-    str(drivers_list[i]['unit']) + ','  + \
-    '"' + drivers_list[i]['dev_type'] + '"' + ',' + \
-    str(drivers_list[i]['block_num']) + ',' + \
-    drivers_list[i]['mfg'] + ',' + \
-    str(drivers_list[i]['version']) + ',' + \
-    str(drivers_list[i]['dcb_length']) + ',' + \
+    csvout.write(disk_img + ',')
+#comment start hex or decimal
+    if args.rawhex: 
+        csvout.write(hex(drivers_list[i]['comment_start']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['comment_start']) + ',')
+
+#comment length hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['comment_len']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['comment_len']) + ',')
+
+#comment
+    csvout.write('"' + drivers_list[i]['comment_txt'] + '"' + ',') 
+
+#dib_start hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['dib_start']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['dib_start']) + ',')
+
+#link_ptr hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['link_ptr']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['link_ptr']) + ',')
+
+#entry hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['entry']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['entry']) + ',')
+
+#name_len hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['name_len']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['name_len']) + ',')
+
+#name ascii only
+    csvout.write(drivers_list[i]['name'] + ',' )
+
+#flag hex or decimal or ascii
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['flag']) + ',')
+    elif args.rawdec:
+        csvout.write(str(drivers_list[i]['flag']) + ',') 
+    else:
+        if drivers_list[i]['flag'] == 192:
+            csvout.write('"' + 'ACTIVE, Load on Boundary' + '"' ',')
+        elif drivers_list[i]['flag'] == 128:
+            csvout.write('ACTIVE' + ',')
+        else:
+            csvout.write('INACTIVE' + ',')
+
+#slot_num hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['slot_num']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['slot_num']) + ',')
+
+#num_devices hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['num_devices']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['num_devices']) + ',')
+
+#unit hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['unit']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['unit']) + ',')
+
+#dev_type hex or decimal or ascii
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['dev_type']) + ',')
+    elif args.rawdec:
+        csvout.write(str(drivers_list[i]['dev_type']) + ',')
+    else:
+        try:
+            csvout.write('"' + dev_types[(drivers_list[i]['dev_type'])] + '"' + ',')
+        except:
+            csvout.write('Unknown' + ',')
+
+#block_num hex or decimal
+    if args.rawhex:
+       csvout.write(hex(drivers_list[i]['block_num']) + ',')
+    elif args.rawdec:
+       csvout.write(str(drivers_list[i]['block_num']) + ',')
+    else:
+       csvout.write(str(drivers_list[i]['block_num']) + ',')
+
+#mfg hex or decimal or ascii
+#    csvout.write(drivers_list[i]['mfg'] + ',')
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['mfg']) + ',')
+    elif args.rawdec:
+        csvout.write(str(drivers_list[i]['mfg']) + ',')
+    else:
+        try:
+            csvout.write(mfgs[(drivers_list[i]['mfg'])] + ',')
+        except:
+             if 1 <= drivers_list[i]['mfg'] <= 31:
+               csvout.write('Apple Computer' + ',')
+             else:
+               csvout.write('Unknown' + ',')
+
+
+
+#version -- leaving as standard output
+    csvout.write(str(drivers_list[i]['version']) + ',')
+
+#dcb_length hex or decimal
+    if args.rawhex:
+        csvout.write(hex(drivers_list[i]['dcb_length']) + ',')
+    else:
+        csvout.write(str(drivers_list[i]['dcb_length']) + ',')
+
+#md5 outputs left alone
+    csvout.write(
     drivers_list[i]['driver_md5'] + ',' + \
     drivers_list[i]['code_md5']
     )
