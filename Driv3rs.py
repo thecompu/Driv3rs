@@ -257,7 +257,7 @@ for i in range(0,len(drivers_list)):
 # here we run a new loop to determine how many other DIBs exist
 # under a major driver. This is primarily for drivers that are designed
 # to support more than one device. for instance, the CFFA3000 is
-# written to support seven drives (.D1 - .D7). otherwise, nothing
+# written to support eight drives (.D1 - .D8). otherwise, nothing
 # else changes save the unit number, which is incremented by 1 for
 # each device supported.
 # generally we enter each major drive DIB and look at the link field.
@@ -265,19 +265,16 @@ for i in range(0,len(drivers_list)):
 # we can open up a new loop to run through the interior DIBs until
 # we encount a 0000 in a link field, then we stop.
 for i in range(0,len(drivers_list)):
-    link_ptr = drivers_list[i]['link_ptr']
-    total_devs = 1
-    if link_ptr != 0x0000:
-        SOSfile.seek(drivers_list[i]['dib_start'],0)
-        SOSfile.seek(drivers_list[i]['link_ptr'],1)
-        sub_loop = True
-        while sub_loop:
-            sub_link = readUnpack(2, type = 'b')
-            if sub_link != 0x0000:
-                total_devs = total_devs + 1
-                SOSfile.seek(32,1)
-            else:
-                sub_loop = False
+    total_devs = 0
+    SOSfile.seek(drivers_list[i]['dib_start'],0)
+    sub_loop = True
+    while sub_loop:
+        total_devs = total_devs + 1
+        sub_link = readUnpack(2, type = 'b') #link to next DIB 
+        if sub_link != 0x0000:
+            SOSfile.seek(drivers_list[i]['dib_start'] + sub_link,0) #link is from DIB start
+        else:
+            sub_loop = False
     drivers_list[i]['num_devices'] = total_devs
 
 # closing the SOS.DRIVER file
