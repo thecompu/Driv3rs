@@ -2,7 +2,7 @@
 from struct import unpack; import argparse
 import hashlib
 import os.path
- 
+
 parser = argparse.ArgumentParser(
     prog='Driv3rs.py',
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(
 * imaged Apple /// disks.  By Mike Whalen, Michael Sternberg   *
 * and Paul Hagstrom. Please submit pull requests to Github.    *
 *             https://github.com/thecompu/Driv3rs              *
+* Special Thanks to Rob Justice for Bug Fixes and Suggestions  *
 ****************************************************************
 ''')
 group = parser.add_mutually_exclusive_group()
@@ -210,7 +211,7 @@ for i in range(0,len(drivers_list)):
     # and the CFFA3000 and populated a dictionary. This dictionary
     # will get more k/v pairs as time goes on.
     mfg = readUnpack(2, type = 'b')
-    drivers_list[i]['mfg']=mfg 
+    drivers_list[i]['mfg']=mfg
 
     # version bytes are integer values stored across two bytes.
     # a nibble corresponds to a major version number, one of two minor
@@ -263,16 +264,28 @@ for i in range(0,len(drivers_list)):
 # generally we enter each major drive DIB and look at the link field.
 # if the link field is not 0000, we know there are other DIBs.
 # we can open up a new loop to run through the interior DIBs until
-# we encount a 0000 in a link field, then we stop.
+# we encounter a 0000 in a link field, then we stop.
 for i in range(0,len(drivers_list)):
     total_devs = 0
     SOSfile.seek(drivers_list[i]['dib_start'],0)
+    sub_sub = ""
+    drivers_list[i]['subdrivers'] = sub_sub #initialize subdrivers dict k/v
     sub_loop = True
     while sub_loop:
         total_devs = total_devs + 1
-        sub_link = readUnpack(2, type = 'b') #link to next DIB 
+        sub_link = readUnpack(2, type = 'b') #link to next DIB
         if sub_link != 0x0000:
             SOSfile.seek(drivers_list[i]['dib_start'] + sub_link,0) #link is from DIB start
+            SOSfile.seek(4,1) #skip over dib Entry pointer
+            subname_len = readUnpack(1, type = '1')
+            subname = readUnpack(subname_len, type = 't')
+            sub_temp = drivers_list[i]['subdrivers']
+            if sub_temp != "" and sub_link != 0x0000:
+                sub_temp = sub_temp + ' ' + '|' + ' ' + subname
+                drivers_list[i]['subdrivers'] = sub_temp
+            else:
+                drivers_list[i]['subdrivers'] = subname
+            SOSfile.seek(drivers_list[i]['dib_start'] + sub_link,0)
         else:
             sub_loop = False
     drivers_list[i]['num_devices'] = total_devs
@@ -287,7 +300,7 @@ exists = os.path.exists(output_csv)
 if exists == False:
     csvout = open(output_csv, 'w')
     csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,' + \
-    'dib_start,link_ptr,entry,name_len,name,flag,slot_num,num_devices,unit,' +\
+    'dib_start,link_ptr,entry,name_len,majorname,flag,slot_num,num_devices,subnames,unit,' +\
     'dev_type,block_num,mfg,version,dcb_length,driver_md5,code_md5\n')
 else:
     csvout = open(output_csv, 'a')
@@ -295,7 +308,7 @@ else:
 for i in range(0,len(drivers_list)):
     csvout.write(disk_img + ',')
 #comment start hex or decimal
-    if args.rawhex: 
+    if args.rawhex:
         csvout.write(hex(drivers_list[i]['comment_start']) + ',')
     else:
         csvout.write(str(drivers_list[i]['comment_start']) + ',')
@@ -307,7 +320,7 @@ for i in range(0,len(drivers_list)):
         csvout.write(str(drivers_list[i]['comment_len']) + ',')
 
 #comment
-    csvout.write('"' + drivers_list[i]['comment_txt'] + '"' + ',') 
+    csvout.write('"' + drivers_list[i]['comment_txt'] + '"' + ',')
 
 #dib_start hex or decimal
     if args.rawhex:
@@ -340,7 +353,7 @@ for i in range(0,len(drivers_list)):
     if args.rawhex:
         csvout.write(hex(drivers_list[i]['flag']) + ',')
     elif args.rawdec:
-        csvout.write(str(drivers_list[i]['flag']) + ',') 
+        csvout.write(str(drivers_list[i]['flag']) + ',')
     else:
         if drivers_list[i]['flag'] == 192:
             csvout.write('"' + 'ACTIVE, Load on Boundary' + '"' ',')
@@ -360,6 +373,9 @@ for i in range(0,len(drivers_list)):
         csvout.write(hex(drivers_list[i]['num_devices']) + ',')
     else:
         csvout.write(str(drivers_list[i]['num_devices']) + ',')
+
+#sub_driver names ascii only
+    csvout.write(drivers_list[i]['subdrivers'] + ',' )
 
 #unit hex or decimal
     if args.rawhex:
