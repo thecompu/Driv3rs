@@ -1,10 +1,10 @@
-#Driv3rs.py
-###A script to help catalog SOS.DRIVER files.
+# Driv3rs.py
+### A script to help catalog SOS.DRIVER files.
 
-##Usage:
+## Usage:
 `$python Driv3rs.py [SOS_DRIVER_FILE] [output_file.csv]`
 
-##Description and Philosophy:
+## Description and Philosophy:
 
 **Driv3rs.py** is a Python 2.7 script written for Apple /// fans. The Apple /// was one of the first computers to introduce the concept of device drivers, small modules that installed into an operating system to run either built-in hardware, internally installed cards, or devices attached to the computer externally. Over the course of the few years of the Apple ///'s existence, hardware manufacturers built devices and wrote device drivers to support those devices (e.g. Apple's ProFile hard drive, the CFFA3000, etc.). However, the Apple /// simply didn't achieve as much prominence as the Apple II-series. Therefore, many drivers remain buried on imaged disks scattered on the Internet and elsewhere.
 
@@ -14,14 +14,14 @@ When using an Apple ///, users would run a utility called the System Configurati
 
 Driv3rs.py works by opening the SOS.DRIVER file and then walking the Device Information Block (DIB) for every driver found within. The information gathered closely parallels the outlined DIB published in Apple's "Apple /// SOS Device Driver Writer's Guide." All information is eventually stored in the output CSV file.
 
-##Requirements:
+## Requirements:
 
 * Imaged Apple /// disk
 * SOS.DRIVER files to be searched
 * A utility like AppleCommander to manage files on imaged disks.
 * Java, if required for your third party utility.
 
-##Suggested Workflow:
+## Suggested Workflow:
 
 1. Acquire an imaged Apple /// floppy disk.
 2. Use AppleCommander's CLI functions to export the SOS.DRIVER file from the imaged disk. (See notes below on AppleCommander usage.)
@@ -33,7 +33,7 @@ A CSV file will be generated with driver information found inside the SOS.DRIVER
 
 (**Note:** If the CSV already exists, Driv3rs.py will append the new SOS.DRIVER file's contents to the existing CSV file. This is handy if you're processing multiple SOS.DRIVER files.)
 
-##Notes about AppleCommander:
+## Notes about AppleCommander:
 
 AppleCommander is a utility written in Java for Apple II users. It allows manipulation of many different types of Apple II-based imaged floppy disks, including disks formatted in DOS 3.2, 3.3 and ProDOS. Apple's Sophisticated Operating System (SOS) is ProDOS's predecessor. Therefore, AppleCommander's ProDOS features can be used to easily export files from SOS disks.
 
@@ -43,17 +43,17 @@ Here's the suggested command-line to enter when exporting using AppleCommander.
 
 `$java -jar AppleCommander-1.3.5.13-ac.jar -g [ImagedDisk.dsk] [SOS.DRIVER] [ExportedFilename]`
 
-##Notes about other utilities:
+## Notes about other utilities:
 
 There are many disk-manipulation utilities for modern computers that can work to export files from imaged Apple /// disks. AppleCommander is one. You can also use CiderPress.
 
-## Contributions
+# Contributions
 You can make contributions to the script by either registering at Github and sending Pull Requests, or you can contact the authors on Twitter, @ultramagnus_tcv and @16kRam. We are most interested in updates to the internal dictionary of manufacturers. 
 
-##Special Thanks
+## Special Thanks
 My continued appreciation goes to 16KRam and to the crew of the Drop III Inches Podcast.
 
-##Links:
+## Links:
 AppleCommander: (http://applecommander.sourceforge.net/)
 
 Java: (https://www.java.com/en/download/)
