@@ -47,7 +47,7 @@ Here's the suggested command-line to enter when exporting using AppleCommander.
 
 There are many disk-manipulation utilities for modern computers that can work to export files from imaged Apple /// disks. AppleCommander is one. You can also use CiderPress.
 
-# Contributions
+## Contributions
 You can make contributions to the script by either registering at Github and sending Pull Requests, or you can contact the authors on Twitter, @ultramagnus_tcv and @16kRam. We are most interested in updates to the internal dictionary of manufacturers. 
 
 ## Special Thanks
