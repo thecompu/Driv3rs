@@ -54,7 +54,7 @@ You can make contributions to the script by either registering at Github and sen
 My continued appreciation goes to 16KRam and to the crew of the Drop III Inches Podcast.
 
 ## Links:
-AppleCommander: (http://applecommander.sourceforge.net/)
+AppleCommander: (https://applecommander.github.io/)
 
 Java: (https://www.java.com/en/download/)
 
