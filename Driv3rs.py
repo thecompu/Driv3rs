@@ -69,10 +69,10 @@ dev_types ={273: 'Character Device, Write-Only, Formatter',
             721: 'Block Device, PROFile',
             4337: 'Block Device, CFFA3000'}
 
-# dictionary for known manufacturers. currently only David Schmidt
-# and Apple Computer are known. Apple Computer is a defined as a range
-# from 1-31.
-mfgs =     {17491: 'David Schmidt'}
+# Dictionary for known manufacturers.  
+# Apple Computer is a defined as a range from 1-31.
+mfgs =     {17491: 'David Schmidt',
+            21066: 'Rob Justice'}
 
 
 # open SOS.DRIVER file to interrogate, then read first
