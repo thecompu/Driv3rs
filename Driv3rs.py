@@ -55,25 +55,56 @@ def nibblize(byte, **options):
     if options.get("direction") == 'low':
         return str(int(hex(byte & 0x0F), 0))
 
+def device_type_string(byte):
+    retstr = ""
+    if byte & 128 == 128:
+        retstr = "Block Device"
+        if byte & 64 == 64:
+            retstr = retstr + ", Read-Write"
+        else: 
+            retstr = retstr + ", Read-Only"
+        if byte & 32 == 32:
+            retstr = retstr + ", Removable"
+        else: 
+            retstr = retstr + ", Non-Removable"
+        if byte & 16 == 16:
+            retstr = retstr + ", Formatter Present"
+        else: 
+            retstr = retstr + ", No Formatter"
+
+    else:
+        retstr = "Character Device"
+        if byte & 64 == 64:
+            retstr = retstr + ", Write Allowed" 
+        else: 
+            retstr = retstr + ", Write Allowed"
+        if byte & 32 == 32:
+            retstr = retstr + ", Read Allowed"
+        else: 
+            retstr = retstr + ", Read Allowed"
+    return retstr
+
 # dictionary for device types and sub types.
-dev_types ={273: 'Character Device, Write-Only, Formatter',
-            321: 'Character Device, Write-Only, RS232 Printer',
-            577: 'Character Device, Write-Only, Silentype',
-            833: 'Character Device, Write-Only, Parallel Printer',
-            323: 'Character Device, Write-Only, Sound Port',
-            353: 'Character Device, Read-Write, System Console',
-            354: 'Character Device, Read-Write, Graphics Screen',
-            355: 'Character Device, Read-Write, Onboard RS232',
-            356: 'Character Device, Read-Write, Parallel Card',
-            481: 'Block Device, Disk ///',
-            721: 'Block Device, PROFile',
-            4337: 'Block Device, CFFA3000'}
+dev_types ={273: 'Character Device, Write-Only, Formatter',        # $11/$01
+            321: 'Character Device, Write-Only, RS232 Printer',    # $41/$01
+            577: 'Character Device, Write-Only, Silentype',        # $41/$02
+            833: 'Character Device, Write-Only, Parallel Printer', # $41/$03
+            323: 'Character Device, Write-Only, Sound Port',       # $43/$01
+            353: 'Character Device, Read-Write, System Console',   # $61/$01
+            354: 'Character Device, Read-Write, Graphics Screen',  # $62/$01
+            355: 'Character Device, Read-Write, Onboard RS232',    # $63/$01
+            356: 'Character Device, Read-Write, Parallel Card',    # $64/$01
+            273: 'Disk /// Formatter',      # $11/$01
+            481: 'Block Device, Disk ///',  # $E1/$01
+            721: 'Block Device, ProFile',   # $D1/$02
+            4337: 'Block Device, CFFA3000'} # $F1/$10
 
 # Dictionary for known manufacturers.  
 # Apple Computer is a defined as a range from 1-31.
-mfgs =     {17491: 'David Schmidt',
+mfgs =     {35: 'Quark Incorporated',
+            13107: 'Bob Consorti: ON THREE Inc.',
+            17491: 'David Schmidt',
             21066: 'Rob Justice'}
-
 
 # open SOS.DRIVER file to interrogate, then read first
 # eight bytes and determine if file is actual SOS.DRIVER file.
@@ -191,8 +222,8 @@ for i in range(0,len(drivers_list)):
     # built from Apple's published Driver Writer's Manual.
     # The type is determined via two bytes. The LSB is the sub-type
     # and the MSB is the type.
-    dev_type = readUnpack(2, type ='b')
-    drivers_list[i]['dev_type'] = dev_type
+    drivers_list[i]['dev_type'] = readUnpack(1, type ='1')
+    drivers_list[i]['dev_subtype'] = readUnpack(1, type ='1')
 
     # we skip the Filler byte ($19) as Apple reserved it.
     SOSfile.seek(1,1)
@@ -301,7 +332,7 @@ if exists == False:
     csvout = open(output_csv, 'w')
     csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,' + \
     'dib_start,link_ptr,entry,name_len,majorname,flag,slot_num,num_devices,subnames,unit,' +\
-    'dev_type,block_num,mfg,version,dcb_length,driver_md5,code_md5\n')
+    'dev_type_sub,block_num,mfg,version,dcb_length,driver_md5,code_md5\n')
 else:
     csvout = open(output_csv, 'a')
 
@@ -390,9 +421,9 @@ for i in range(0,len(drivers_list)):
         csvout.write(str(drivers_list[i]['dev_type']) + ',')
     else:
         try:
-            csvout.write('"' + dev_types[(drivers_list[i]['dev_type'])] + '"' + ',')
+            csvout.write('"' + dev_types[drivers_list[i]['dev_subtype']*256 + drivers_list[i]['dev_type']] + '"' + ',')
         except:
-            csvout.write('Unknown' + ',')
+            csvout.write('"' + device_type_string(drivers_list[i]['dev_type']) + '; Subtype '+ hex(drivers_list[i]['dev_subtype']) + '"' + ',')
 
 #block_num hex or decimal
     if args.rawhex:
@@ -415,7 +446,7 @@ for i in range(0,len(drivers_list)):
              if 1 <= drivers_list[i]['mfg'] <= 31:
                csvout.write('Apple Computer' + ',')
              else:
-               csvout.write('Unknown' + ',')
+               csvout.write(hex(drivers_list[i]['mfg']) + ' (Unknown)' + ',')
 
 
 
