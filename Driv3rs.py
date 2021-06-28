@@ -77,11 +77,11 @@ def device_type_string(byte):
         if byte & 64 == 64:
             retstr = retstr + ", Write Allowed" 
         else: 
-            retstr = retstr + ", Write Allowed"
+            retstr = retstr + ", Write Disabled"
         if byte & 32 == 32:
             retstr = retstr + ", Read Allowed"
         else: 
-            retstr = retstr + ", Read Allowed"
+            retstr = retstr + ", Read Disabled"
     return retstr
 
 # dictionary for device types and sub types.
