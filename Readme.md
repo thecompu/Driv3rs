@@ -6,7 +6,7 @@
 
 ## Description and Philosophy:
 
-**Driv3rs.py** is a Python 2.7 script written for Apple /// fans. The Apple /// was one of the first computers to introduce the concept of device drivers, small modules that installed into an operating system to run either built-in hardware, internally installed cards, or devices attached to the computer externally. Over the course of the few years of the Apple ///'s existence, hardware manufacturers built devices and wrote device drivers to support those devices (e.g. Apple's ProFile hard drive, the CFFA3000, etc.). However, the Apple /// simply didn't achieve as much prominence as the Apple II-series. Therefore, many drivers remain buried on imaged disks scattered on the Internet and elsewhere.
+**Driv3rs.py** is a Python 3 script written for Apple /// fans. The Apple /// was one of the first computers to introduce the concept of device drivers, small modules that installed into an operating system to run either built-in hardware, internally installed cards, or devices attached to the computer externally. Over the course of the few years of the Apple ///'s existence, hardware manufacturers built devices and wrote device drivers to support those devices (e.g. Apple's ProFile hard drive, the CFFA3000, etc.). However, the Apple /// simply didn't achieve as much prominence as the Apple II-series. Therefore, many drivers remain buried on imaged disks scattered on the Internet and elsewhere.
 
 Driv3rs.py hopes to help that situation. Given a SOS.DRIVER file properly exported from an imaged Apple /// disk, Driv3rs.py can produce a Comma Separated Values (CSV) file. This CSV contains a whole host of stats including device name, commentary, manufacturer, as well as other potentially useful pieces of information.
 
