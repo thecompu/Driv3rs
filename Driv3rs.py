@@ -64,7 +64,7 @@ def nibblize(byte, **options):
         return str(int(hex(byte & 0x0F), 0))
 
 def immutable_code_md5(code):
-    """Return the a3dmd immutable-v1 MD5 (identification, not security).
+    """Return the more immutable-v1 MD5 (identification, not security).
 
     Hash from the primary entry to the end of the code segment, omitting
     every linked DIB and its inline DCB. Other bytes retain their order.
