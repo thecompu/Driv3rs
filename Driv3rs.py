@@ -1,10 +1,14 @@
+#!/usr/bin/env python3
 # use unpack from struct and argv from sys
 from struct import unpack; import argparse
 import hashlib
 import os.path
+import csv
 
 parser = argparse.ArgumentParser(
     prog='Driv3rs.py',
+    add_help=False,
+    allow_abbrev=False,
     formatter_class=argparse.RawDescriptionHelpFormatter,
     description='''\
 ****************************************************************
@@ -15,6 +19,10 @@ parser = argparse.ArgumentParser(
 * Special Thanks to Rob Justice for Bug Fixes and Suggestions  *
 ****************************************************************
 ''')
+parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
+parser.add_argument("-im", "--immutable-md5", action="store_true",
+                    help="Omit all linked DIB/DCB regions when calculating hash, not just "
+                         "the primary DIB entry; retain historical hashes")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-rh", "--rawhex", action="store_true", help="Store hex values in CSV")
 group.add_argument("-rd", "--rawdec", action="store_true", help="Store decimal values in CSV")
@@ -34,7 +42,7 @@ def readUnpack(bytes, **options):
     if options.get("type") == 't':
         SOS = SOSfile.read(bytes)
         text_unpacked = unpack('%ss' % bytes, SOS)
-        return ''.join(text_unpacked)
+        return text_unpacked[0].decode('latin-1')
 
     if options.get("type") == 'b':
         SOS = SOSfile.read(bytes)
@@ -44,7 +52,7 @@ def readUnpack(bytes, **options):
     if options.get("type") == '1':
         SOS = SOSfile.read(bytes)
         offset_unpacked = unpack ('< B', SOS)
-        return int(ord(SOS))
+        return offset_unpacked[0]
 
 # this function takes a byte and performs bit operations
 # to determine integer value. Outputs as a string. Used in
@@ -54,6 +62,63 @@ def nibblize(byte, **options):
         return str(int(hex(byte >> 4), 0))
     if options.get("direction") == 'low':
         return str(int(hex(byte & 0x0F), 0))
+
+def immutable_code_md5(code):
+    """Return the a3dmd immutable-v1 MD5 (identification, not security).
+
+    Hash from the primary entry to the end of the code segment, omitting
+    every linked DIB and its inline DCB. Other bytes retain their order.
+    Driver-specific mutable data outside those regions remains included.
+    """
+    def word(offset):
+        if offset < 0 or offset + 2 > len(code):
+            raise ValueError('Truncated DIB field')
+        return unpack('<H', code[offset:offset + 2])[0]
+
+    spans, entries, seen = [], [], set()
+    offset = 0
+    while True:
+        if offset in seen:
+            raise ValueError('Cyclic DIB chain')
+        seen.add(offset)
+        if offset + 0x22 > len(code):
+            raise ValueError('DIB outside code segment')
+        name_length = code[offset + 4]
+        if not 1 <= name_length <= 15:
+            raise ValueError('Invalid DIB name length')
+        if not all(33 <= byte <= 126
+                   for byte in code[offset + 5:offset + 5 + name_length]):
+            raise ValueError('Non-printable DIB name')
+        end = offset + 0x22 + word(offset + 0x20)
+        if end > len(code):
+            raise ValueError('DCB outside code segment')
+        entry = word(offset + 2)
+        if entry >= len(code):
+            raise ValueError('Entry outside code segment')
+        spans.append((offset, end))
+        entries.append(entry)
+        offset = word(offset)
+        if offset == 0:
+            break
+
+    spans.sort()
+    for previous, current in zip(spans, spans[1:]):
+        if previous[1] > current[0]:
+            raise ValueError('Overlapping DIB/DCB regions')
+    for entry in entries:
+        if any(lo <= entry < hi for lo, hi in spans):
+            raise ValueError('Entry inside DIB/DCB')
+
+    digest = hashlib.md5(usedforsecurity=False)
+    pos = entries[0]
+    for lo, hi in spans:
+        if hi <= pos:
+            continue
+        if lo > pos:
+            digest.update(code[pos:lo])
+        pos = max(pos, hi)
+    digest.update(code[pos:])
+    return digest
 
 def device_type_string(byte):
     retstr = ""
@@ -113,10 +178,10 @@ SOSfile = open(disk_img, 'rb')
 filetype = readUnpack(8, type = 't')
 
 if filetype == 'SOS DRVR':
-    print "Valid SOS.DRIVER file:   {}".format(disk_img)
+    print("Valid SOS.DRIVER file:   {}".format(disk_img))
 else:
-    print "INVALID SOS.DRIVER file: {}".format(disk_img)
-    exit()
+    print("INVALID SOS.DRIVER file: {}".format(disk_img))
+    raise SystemExit(1)
 
 
 # read two bytes immediately after "SOS DRVR" to determine jump
@@ -278,13 +343,25 @@ for i in range(0,len(drivers_list)):
     # code bytes contain the region between the entry point and the next driver
     code_bytes = SOSfile.read(drivers_list[i]['next_driver'] - drivers_list[i]['entry'])
     # Hash just the code portion
-    code_md5 = hashlib.md5(code_bytes)
+    code_md5 = hashlib.md5(code_bytes, usedforsecurity=False)
     # Hash the whole driver, which will include both code and parameters
-    driver_md5 = hashlib.md5(config_bytes)
+    driver_md5 = hashlib.md5(config_bytes, usedforsecurity=False)
     driver_md5.update(code_bytes)
     # Store the resulting hash digest hex strings
     drivers_list[i]['driver_md5'] = driver_md5.hexdigest()
     drivers_list[i]['code_md5'] = code_md5.hexdigest()
+    if args.immutable_md5:
+        saved_position = SOSfile.tell()
+        SOSfile.seek(drivers_list[i]['dib_start'], 0)
+        driver_code = SOSfile.read(drivers_list[i]['next_driver'])
+        SOSfile.seek(saved_position, 0)
+        if len(driver_code) != drivers_list[i]['next_driver']:
+            parser.error('Truncated driver code segment')
+        try:
+            immutable_md5 = immutable_code_md5(driver_code)
+        except ValueError as error:
+            parser.error('{}: {}'.format(drivers_list[i]['name'], error))
+        drivers_list[i]['code_md5_immutable_v1'] = immutable_md5.hexdigest()
 
 # here we run a new loop to determine how many other DIBs exist
 # under a major driver. This is primarily for drivers that are designed
@@ -327,15 +404,25 @@ SOSfile.close()
 # here begins writing out the CSV file. the order is mainly
 # structured like the structure in the Driver Writer's Manual.
 # first, check if file exists and, if so, omit header
-exists = os.path.exists(output_csv)
-if exists == False:
-    csvout = open(output_csv, 'w')
-    csvout.write('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,' + \
-    'dib_start,link_ptr,entry,name_len,majorname,flag,slot_num,num_devices,subnames,unit,' +\
-    'dev_type_sub,block_num,mfg,version,dcb_length,driver_md5,code_md5\n')
+header = ('SOS_DRIVER_FILE,comment_start,comment_len,comment_txt,'
+          'dib_start,link_ptr,entry,name_len,majorname,flag,slot_num,num_devices,subnames,unit,'
+          'dev_type_sub,block_num,mfg,version,dcb_length,driver_md5,code_md5')
+if args.immutable_md5:
+    header += ',code_md5_no_DIBs'
+exists = os.path.exists(output_csv) and os.path.getsize(output_csv) > 0
+if exists:
+    with open(output_csv, 'r', encoding='utf-8', newline='') as existing_csv:
+        try:
+            existing_header = next(csv.reader(existing_csv), None)
+        except (UnicodeError, csv.Error) as error:
+            parser.error('Cannot read existing CSV header: {}'.format(error))
+    if existing_header != header.split(','):
+        parser.error('CSV header does not match the selected options; '
+                     'use a new CSV file or the matching --immutable-md5 setting')
+    csvout = open(output_csv, 'a', encoding='utf-8', newline='')
 else:
-    csvout = open(output_csv, 'a')
-
+    csvout = open(output_csv, 'w', encoding='utf-8', newline='')
+    csvout.write(header + '\n')
 for i in range(0,len(drivers_list)):
     csvout.write(disk_img + ',')
 #comment start hex or decimal
@@ -464,5 +551,7 @@ for i in range(0,len(drivers_list)):
     drivers_list[i]['driver_md5'] + ',' + \
     drivers_list[i]['code_md5']
     )
+    if args.immutable_md5:
+        csvout.write(',' + drivers_list[i]['code_md5_immutable_v1'])
     csvout.write('\n')
 csvout.close()
